@@ -1,3 +1,4 @@
+.DS_Store
 *.a
 *.sw*
 
@@ -9,7 +10,7 @@ compile_commands.json
 moc_*
 *.moc
 
-genesis.json
+#genesis.json
 hardfork.hpp
 
 libraries/utilities/git_revision.cpp
@@ -41,3 +42,18 @@ object_database/*
 
 *.pyc
 *.pyo
+
+tmp
+libraries/egenesis/egenesis_brief.cpp
+libraries/egenesis/egenesis_full.cpp
+libraries/egenesis/embed_genesis
+programs/build_helpers/member_enumerator
+programs/delayed_node/delayed_node
+programs/genesis_util/convert_address
+programs/genesis_util/genesis_update
+programs/genesis_util/get_dev_key
+
+programs/size_checker/size_checker
+programs/build_helpers/cat-parts
+tests/cli_test
+tests/generate_empty_blocks/generate_empty_blocks
