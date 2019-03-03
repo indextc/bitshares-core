@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 #include <graphene/app/application.hpp>
+#include <graphene/app/config_util.hpp>
 
 #include <graphene/witness/witness.hpp>
 #include <graphene/debug_witness/debug_witness.hpp>
@@ -33,30 +34,19 @@
 #include <graphene/es_objects/es_objects.hpp>
 #include <graphene/grouped_orders/grouped_orders_plugin.hpp>
 
-#include <fc/exception/exception.hpp>
 #include <fc/thread/thread.hpp>
 #include <fc/interprocess/signals.hpp>
-#include <fc/log/console_appender.hpp>
-#include <fc/log/file_appender.hpp>
-#include <fc/log/logger.hpp>
-#include <fc/log/logger_config.hpp>
 
 #include <boost/filesystem.hpp>
-
 #include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include <boost/container/flat_set.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include <graphene/utilities/git_revision.hpp>
-#include <boost/version.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <websocketpp/version.hpp>
 
 #include <iostream>
-#include <fstream>
 
 #ifdef WIN32
 # include <signal.h>
@@ -66,6 +56,7 @@
 
 using namespace graphene;
 namespace bpo = boost::program_options;
+<<<<<<< HEAD
 
 void write_default_logging_config_to_stream(std::ostream& out);
 fc::optional<fc::logging_config> load_logging_config_from_ini_file(const fc::path& config_ini_filename);
@@ -176,6 +167,8 @@ static void create_new_config_file( const fc::path& config_ini_path, const fc::p
    if (logging_config)
       fc::configure_logging(*logging_config);
 }
+=======
+>>>>>>> upstream/master
 
 int main(int argc, char** argv) {
    app::application* node = new app::application();
@@ -185,9 +178,11 @@ int main(int argc, char** argv) {
       bpo::options_description cfg_options("Graphene Witness Node");
       app_options.add_options()
             ("help,h", "Print this help message and exit.")
-            ("data-dir,d", bpo::value<boost::filesystem::path>()->default_value("witness_node_data_dir"), "Directory containing databases, configuration file, etc.")
+            ("data-dir,d", bpo::value<boost::filesystem::path>()->default_value("witness_node_data_dir"),
+                    "Directory containing databases, configuration file, etc.")
             ("version,v", "Display version information")
-            ;
+            ("plugins", bpo::value<std::string>()->default_value("witness account_history market_history grouped_orders"),
+                    "Space-separated list of plugins to activate");
 
       bpo::variables_map options;
 
@@ -211,10 +206,24 @@ int main(int argc, char** argv) {
       }
       catch (const boost::program_options::error& e)
       {
-        std::cerr << "Error parsing command line: " << e.what() << "\n";
-        return 1;
+         std::cerr << "Error parsing command line: " << e.what() << "\n";
+         return 1;
       }
 
+      std::set<std::string> plugins;
+      boost::split(plugins, options.at("plugins").as<std::string>(), [](char c){return c == ' ';});
+
+      if(plugins.count("account_history") && plugins.count("elasticsearch")) {
+         std::cerr << "Plugin conflict: Cannot load both account_history plugin and elasticsearch plugin\n";
+         return 1;
+      }
+
+      std::for_each(plugins.begin(), plugins.end(), [node](const std::string& plug) mutable {
+         if (!plug.empty()) {
+            node->enable_plugin(plug);
+         }
+      });
+      
       if( options.count("help") )
       {
          std::cout << app_options << "\n";
@@ -238,13 +247,10 @@ int main(int argc, char** argv) {
          if( data_dir.is_relative() )
             data_dir = fc::current_path() / data_dir;
       }
-
-      fc::path config_ini_path = data_dir / "config.ini";
-      if( !fc::exists(config_ini_path) )
-         create_new_config_file( config_ini_path, data_dir, cfg_options );
-      load_config_file( config_ini_path, cfg_options, options );
+      app::load_configuration_options(data_dir, cfg_options, options);
 
       bpo::notify(options);
+
       node->initialize(data_dir, options);
       node->initialize_plugins( options );
 
@@ -271,7 +277,7 @@ int main(int argc, char** argv) {
       node->shutdown_plugins();
       node->shutdown();
       delete node;
-      return 0;
+      return EXIT_SUCCESS;
    } catch( const fc::exception& e ) {
       // deleting the node can yield, so do this outside the exception handler
       unhandled_exception = e;
@@ -282,10 +288,11 @@ int main(int argc, char** argv) {
       elog("Exiting with error:\n${e}", ("e", unhandled_exception->to_detail_string()));
       node->shutdown();
       delete node;
-      return 1;
+      return EXIT_FAILURE;
    }
 }
 
+<<<<<<< HEAD
 // logging config is too complicated to be parsed by boost::program_options,
 // so we do it by hand
 //
@@ -418,3 +425,5 @@ fc::optional<fc::logging_config> load_logging_config_from_ini_file(const fc::pat
    }
    FC_RETHROW_EXCEPTIONS(warn, "")
 }
+=======
+>>>>>>> upstream/master

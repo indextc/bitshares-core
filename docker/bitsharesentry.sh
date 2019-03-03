@@ -80,8 +80,15 @@ ln -f -s /etc/bitshares/config.ini /var/lib/bitshares
 
 # Plugins need to be provided in a space-separated list, which
 # makes it necessary to write it like this
+<<<<<<< HEAD
 if [[ ! -z "$INDEXD_PLUGINS" ]]; then
    $INDEXD --data-dir ${HOME} ${ARGS} ${INDEXD_ARGS} --plugins "${INDEXD_PLUGINS}"
 else
    $INDEXD --data-dir ${HOME} ${ARGS} ${INDEXD_ARGS}
+=======
+if [[ ! -z "$BITSHARESD_PLUGINS" ]]; then
+   exec $BITSHARESD --data-dir ${HOME} ${ARGS} ${BITSHARESD_ARGS} --plugins "${BITSHARESD_PLUGINS}"
+else
+   exec $BITSHARESD --data-dir ${HOME} ${ARGS} ${BITSHARESD_ARGS}
+>>>>>>> upstream/master
 fi

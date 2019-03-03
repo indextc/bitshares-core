@@ -26,8 +26,6 @@
 #include <graphene/chain/proposal_object.hpp>
 #include <graphene/chain/hardfork.hpp>
 
-#include <fc/smart_ref_impl.hpp>
-
 namespace graphene { namespace chain {
 
 
@@ -113,6 +111,27 @@ struct hardfork_visitor_214 // non-recursive proposal visitor
    }
 };
 
+void hardfork_visitor_1479::operator()(const proposal_update_operation &v)
+{
+   if( nested_update_count == 0 || v.proposal.instance.value > max_update_instance )
+      max_update_instance = v.proposal.instance.value;
+   nested_update_count++;
+}
+
+void hardfork_visitor_1479::operator()(const proposal_delete_operation &v)
+{
+   if( nested_update_count == 0 || v.proposal.instance.value > max_update_instance )
+      max_update_instance = v.proposal.instance.value;
+   nested_update_count++;
+}
+
+// loop and self visit in proposals
+void hardfork_visitor_1479::operator()(const graphene::chain::proposal_create_operation &v)
+{
+   for (const op_wrapper &op : v.proposed_ops)
+      op.op.visit(*this);
+}
+
 void_result proposal_create_evaluator::do_evaluate(const proposal_create_operation& o)
 { try {
    const database& d = db();
@@ -128,6 +147,7 @@ void_result proposal_create_evaluator::do_evaluate(const proposal_create_operati
       for (const op_wrapper &op : o.proposed_ops)
          op.op.visit( hf214 );
    }
+   vtor_1479( o );
 
    const auto& global_parameters = d.get_global_properties().parameters;
 
@@ -199,6 +219,20 @@ object_id_type proposal_create_evaluator::do_apply(const proposal_create_operati
       std::set_difference(required_active.begin(), required_active.end(),
                           proposal.required_owner_approvals.begin(), proposal.required_owner_approvals.end(),
                           std::inserter(proposal.required_active_approvals, proposal.required_active_approvals.begin()));
+
+      if( d.head_block_time() > HARDFORK_CORE_1479_TIME )
+         FC_ASSERT( vtor_1479.nested_update_count == 0 || proposal.id.instance() > vtor_1479.max_update_instance,
+                    "Cannot update/delete a proposal with a future id!" );
+      else if( vtor_1479.nested_update_count > 0 && proposal.id.instance() <= vtor_1479.max_update_instance )
+      {
+         // prevent approval
+         transfer_operation top;
+         top.from = GRAPHENE_NULL_ACCOUNT;
+         top.to = GRAPHENE_RELAXED_COMMITTEE_ACCOUNT;
+         top.amount = asset( GRAPHENE_MAX_SHARE_SUPPLY );
+         proposal.proposed_transaction.operations.emplace_back( top );
+         wlog( "Issue 1479: ${p}", ("p",proposal) );
+      }
    });
 
    return proposal.id;
@@ -224,20 +258,6 @@ void_result proposal_update_evaluator::do_evaluate(const proposal_update_operati
       FC_ASSERT( _proposal->available_owner_approvals.find(id) != _proposal->available_owner_approvals.end(),
                  "", ("id", id)("available", _proposal->available_owner_approvals) );
    }
-
-   /*  All authority checks happen outside of evaluators
-   if( (d.get_node_properties().skip_flags & database::skip_authority_check) == 0 )
-   {
-      for( const auto& id : o.key_approvals_to_add )
-      {
-         FC_ASSERT( trx_state->signed_by(id) );
-      }
-      for( const auto& id : o.key_approvals_to_remove )
-      {
-         FC_ASSERT( trx_state->signed_by(id) );
-      }
-   }
-   */
 
    return void_result();
 } FC_CAPTURE_AND_RETHROW( (o) ) }
@@ -274,6 +294,9 @@ void_result proposal_update_evaluator::do_apply(const proposal_update_operation&
       try {
          _processed_transaction = d.push_proposal(*_proposal);
       } catch(fc::exception& e) {
+         d.modify(*_proposal, [&e](proposal_object& p) {
+            p.fail_reason = e.to_string(fc::log_level(fc::log_level::all));
+         });
          wlog("Proposed transaction ${id} failed to apply once approved with exception:\n----\n${reason}\n----\nWill try again when it expires.",
               ("id", o.proposal)("reason", e.to_detail_string()));
          _proposal_failed = true;
