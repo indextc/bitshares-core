@@ -25,19 +25,19 @@ The entry point simplifies the use of parameters for the `witness_node`
 
 ### Supported Environmental Variables
 
-* `$BITSHARESD_SEED_NODES`
-* `$BITSHARESD_RPC_ENDPOINT`
-* `$BITSHARESD_PLUGINS`
-* `$BITSHARESD_REPLAY`
-* `$BITSHARESD_RESYNC`
-* `$BITSHARESD_P2P_ENDPOINT`
-* `$BITSHARESD_WITNESS_ID`
-* `$BITSHARESD_PRIVATE_KEY`
-* `$BITSHARESD_TRACK_ACCOUNTS`
-* `$BITSHARESD_PARTIAL_OPERATIONS`
-* `$BITSHARESD_MAX_OPS_PER_ACCOUNT`
-* `$BITSHARESD_ES_NODE_URL`
-* `$BITSHARESD_TRUSTED_NODE`
+* `$INDEXD_SEED_NODES`
+* `$INDEXD_RPC_ENDPOINT`
+* `$INDEXD_PLUGINS`
+* `$INDEXD_REPLAY`
+* `$INDEXD_RESYNC`
+* `$INDEXD_P2P_ENDPOINT`
+* `$INDEXD_WITNESS_ID`
+* `$INDEXD_PRIVATE_KEY`
+* `$INDEXD_TRACK_ACCOUNTS`
+* `$INDEXD_PARTIAL_OPERATIONS`
+* `$INDEXD_MAX_OPS_PER_ACCOUNT`
+* `$INDEXD_ES_NODE_URL`
+* `$INDEXD_TRUSTED_NODE`
 
 ### Default config
 
@@ -65,7 +65,7 @@ With docker compose, multiple nodes can be managed with a single
        - ./docker/conf/:/etc/bitshares/
       # Optional parameters
       environment:
-       - BITSHARESD_ARGS=--help
+       - INDEXD_ARGS=--help
 
 
     version: '3'
@@ -76,7 +76,7 @@ With docker compose, multiple nodes can be managed with a single
       environment:
       # Optional parameters
       environment:
-       - BITSHARESD_ARGS=--help
+       - INDEXD_ARGS=--help
       ports:
        - "0.0.0.0:8090:8090"
       volumes:
@@ -111,8 +111,8 @@ services:
  delayed_node:
   image: bitshares/bitshares-core:latest
   environment:
-   - 'BITSHARESD_PLUGINS=delayed_node witness'
-   - 'BITSHARESD_TRUSTED_NODE=ws://fullnode:8090'
+   - 'INDEXD_PLUGINS=delayed_node witness'
+   - 'INDEXD_TRUSTED_NODE=ws://fullnode:8090'
   ports:
    - "0.0.0.0:8091:8090"
   volumes:
