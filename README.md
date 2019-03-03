@@ -9,12 +9,12 @@ Index Core
 * [FAQ](#faq)
 * [License](#license)
 
-BitShares Core is the BitShares blockchain implementation and command-line interface.
-The web wallet is [BitShares UI](https://github.com/indextc/index-ui).
+Index Core is the Index blockchain implementation and command-line interface.
+The web wallet is [Index UI](https://github.com/indextc/index-ui).
 
 Visit [indextc.org](https://indextc.org/) to learn about BitShares and join the community at [BitSharesTalk.org](https://bitsharestalk.org/).
 
-**NOTE:** The official BitShares git repository location, default branch, and submodule remotes were recently changed. Existing
+**NOTE:** The official Index git repository location, default branch, and submodule remotes were recently changed. Existing
 repositories can be updated with the following steps:
 
     git remote set-url origin https://github.com/indextc/index-core.git
@@ -37,7 +37,7 @@ We recommend building on Ubuntu 16.04 LTS, and the build dependencies may be ins
 To build after all dependencies are installed:
 
     git clone https://github.com/indextc/index-core.git
-    cd bitshares-core
+    cd index-core
     git checkout <LATEST_RELEASE_TAG>
     git submodule update --init --recursive
     cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo .
